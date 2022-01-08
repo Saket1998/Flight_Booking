@@ -20,7 +20,7 @@
 
 	<build>
 		<plugins>
-		<plugin>
+			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
 				<version>3.4.2</version>
@@ -144,6 +144,12 @@
 			<artifactId>assertions</artifactId>
 			<version>1.0.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<version>1.2.3</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 

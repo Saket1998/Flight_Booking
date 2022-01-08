@@ -5,8 +5,6 @@ DB:
  host: "sql6.freemysqlhosting.net"
  port: "3306"
  name: "sql6460985"
- username: "sql6460985"
- password: "zkYTluy5fH"
  reconnection-strategy-frequency-ms : "2000"
  reconnection-strategy-attempts : "2"
  
