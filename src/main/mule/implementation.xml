@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="getFlights" doc:id="cc4d6769-8f5b-4278-bc4f-d98229013609" >
+		<logger level="INFO" doc:name="Start" doc:id="67e6c408-b2ee-4b08-87d0-aba783e8bba6" message="#[payload]"/>
+		<db:select doc:name="Get Flights Data" doc:id="6f8b9b73-5357-4820-a197-c1bfcb454976" config-ref="Database_Config">
+			<reconnect frequency="${DB.reconnection-strategy-frequency-ms}" count="${DB.reconnection-strategy-attempts}" />
+			<db:sql ><![CDATA[select * from INDIGO WHERE origin=:origin and destination=:destination and departureDate=:departuredate]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	origin: attributes.queryParams.origin,
+	destination: attributes.queryParams.destination,
+	departuredate: attributes.queryParams.departuredate
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="JSON Response" doc:id="9ddcc8ff-3116-4bf1-9db1-d22b1343cc84" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	price: payload01.price,
+	totalSeats: payload01.totalSeats,
+	destination: payload01.destination,
+	ID: payload01.ID,
+	origin: payload01.origin,
+	departureDate: payload01.departureDate,
+	code: payload01.code,
+	emptySeats : payload01.emptySeats,
+	flighttype : payload01.flighttype
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End" doc:id="4e20d8ea-1444-40ec-b20d-4a7fa87cb3e5" message="#[payload]"/>
+	</flow>
+	<flow name="bookFlight" doc:id="8160896b-e9e1-4c43-965a-28216ce02db7" >
+		<logger level="INFO" doc:name="Start" doc:id="47094e96-2c82-47d9-b060-7df930e1f751" message="#[payload]"/>
+		<ee:transform doc:name="Create Booking Request" doc:id="fd65600b-710c-435d-bb40-39ae3b0df553" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload.travellers map ( traveller , indexOfTraveller ) -> {
+	address: traveller.address,
+	destination: payload.destination,
+	ID: payload.ID as String,
+	origin: payload.origin,
+	departureDate: payload.departureDate,
+	mobileNo: traveller.mobileNo,
+	seatNo: traveller.seatNo as String,
+	travellerName: traveller.travellerName,
+	age: traveller.age,
+	code: payload.code,
+	flighttype: payload.flighttype
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk insert" doc:id="1b71ad03-5219-42ea-9d06-c8ced53c380d" config-ref="Database_Config" target="insertedData">
+			<reconnect frequency="${DB.reconnection-strategy-frequency-ms}" count="${DB.reconnection-strategy-attempts}" />
+			<db:sql ><![CDATA[INSERT INTO FLIGHT (ID,origin,destination,departureDate,travellerName,age,mobileNo,address,code,seatNo,flighttype)values
+(:ID,:origin,:destination,:departureDate,:travellerName,:age,:mobileNo,:address,:code,:seatNo,:flighttype)]]></db:sql>
+		</db:bulk-insert>
+		<set-payload value="#[vars.originalPayload]" doc:name="Storing Original Data" doc:id="6d07d86e-5313-40fd-b4fb-1fd0a962425d" />
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="26f1c9e5-ad7f-4567-b5eb-e2dd611d91fc" variableName="bookingId"/>
+		<ee:transform doc:name="Booking Response in JSON format" doc:id="52d76c71-1b71-4115-8723-21cf35688500" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	totalPrice: payload.price * payload.noOftravellers,
+	flightDetails: {
+		destination: payload.destination,
+		origin: payload.origin,
+		departureDate: payload.departureDate,
+		code: payload.code,
+		flighttype: payload.flighttype
+	},
+	travellerDetails: payload.travellers map ( traveller , indexOfTraveller ) -> {
+		travellerName: traveller.travellerName,
+		address: traveller.address,
+		mobileNo: traveller.mobileNo,
+		seatNo: traveller.seatNo,
+		age: traveller.age
+	},
+	message: "Flight Booked Successfully!!!",
+	bookingID: vars.bookingId
+	}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End" doc:id="8c924ce5-a769-4802-a43c-6a1042e2f77f" message="#[payload]"/>
+	</flow>
+</mule>
