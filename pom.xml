@@ -31,7 +31,7 @@
 						<muleVersion>4.4.0</muleVersion>
 						<username>Saket1_Didwania1998</username>
 						<password>Api54321</password>
-						<applicationName>flightbookingsystemapi</applicationName>
+						<applicationName>FlightIndigo</applicationName>
 						<environment>Sandbox</environment>
 						<region>us-east-2</region>
 						<workers>1</workers>
