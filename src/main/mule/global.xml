@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	<configuration-properties doc:name="Configuration properties" doc:id="8eb9cc54-38a4-4f24-bf48-9a9a8338fe05" file="config/dev-properties.yaml" />
 	<configuration doc:name="Configuration" doc:id="8a6ff4df-722c-47f9-9b50-2850a2802a36" defaultErrorHandler-ref="Error_Handler" />
 	<global-property doc:name="Global Property" doc:id="97001785-535a-4e55-944d-d1a24b78bc68" name="secure.key" value="Mulesoft" />
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="939055a8-9adb-4429-977b-33dcc50bd7a1" file="local.properties" key="${secure.key}" >
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="939055a8-9adb-4429-977b-33dcc50bd7a1" file="config/local.yaml" key="${secure.key}" >
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>
 	<error-handler name = "Error_Handler">
